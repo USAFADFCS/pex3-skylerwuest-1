@@ -24,7 +24,7 @@ PageQueue *pqInit(unsigned int maxSize) {
 /**
  * @brief Access a page in the queue (simulates a memory reference)
  */
-long pqAccess(PageQueue *pq, unsigned long pageNum) {
+long pqAccess(PageQueue *pq, unsigned long pageNum) {  // this is the LRU here
     // TODO: Search the queue for pageNum (suggest searching tail->head
     //       so you naturally count depth from the MRU end).
     //
@@ -37,7 +37,37 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {
     //   - Allocate a new node for pageNum and insert it at the tail.
     //   - If size now exceeds maxSize, evict the head node (free it).
     //   - Return -1.
-    return -1;
+    int depth = 0;
+    PageQueue *temp = pq;
+
+    while (depth <= temp->size)
+    {   
+        depth++;
+
+        if (pageNum == temp->tail->prev->pageNum)
+        {
+            return depth;
+        }
+
+        temp = temp->tail->prev;
+    }
+    
+    // Miss
+    PqNode* newNodePNum = malloc(sizeof(PageQueue));  // Allocate new node
+    newNodePNum->pageNum = pageNum;
+    pq->tail = newNodePNum;
+    pq->size++;
+
+    // Check size (make a new variable)
+
+    if (pq->size > pq->maxSize)  // Larger, evict head node
+    {
+        free(pq->head);
+        pq->size--;  // Make size smaller since we are removing
+        return -1;
+    }
+    
+    return depth;
 }
 
 /**
