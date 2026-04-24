@@ -71,7 +71,7 @@ int findElementDLinkedList(PageQueue* list, int element);
 
 
 struct PageQueue *delHead(struct PageQueue *head); 
-struct PageQueue *insertEnd(struct PageQueue *head, PqNode *new_node);
+
 struct PageQueue *delAt(struct PageQueue *queue, int position);
 
 #endif  // PAGEQUEUE_H

@@ -36,39 +36,134 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {  // this is the LRU here
     //   - Return d.
 
     int depth = 0;
-    
-    if (pq->head != NULL && pq->tail != NULL) // There is something in the queue
+    //if (pq->head != NULL && pq->tail != NULL) // There is something in the queue
+    if (pq->size != 0)
     {   
         PqNode *temp = pq->tail;
-        while (pq->tail != NULL)
-        {   
-            if (temp->pageNum == pageNum)
-            {
-                continue;
-            } else{
-                temp = temp->prev;
-                printf("depth, %d", depth);
-                depth++;
-            }
-        }
+        
+        printf("Page NUM %ld\n", temp->pageNum);
+        printf("TAIL Page NUM %ld\n", pq->tail->pageNum);
 
+        while (pq->tail != NULL && temp->pageNum != pageNum)  // Will get Depth of page if found 
+        {   
+            temp = temp->prev;
+            printf("depth, %d", depth);
+            depth++;
+        }
         if (temp->pageNum == pageNum)  // Page Found
         {
-        // Remove the node from its current position and re-insert it at the tail (most recently used)
-        PqNode *current = temp;
+            // Remove the node from its current position and re-insert it at the tail (most recently used)
+            // INSERT AT END (No longer helper function)
+            struct PqNode *curr = pq->head;
+            
+                // Edge Case #1 - Empty Queue 
+            if (curr == NULL)
+            {
+                printf("I made it here5\n");
+                pq->head = temp;
+                pq->tail = temp;
+                pq->size++;
+            }
+            else {   
+                // Edge Case #2 - Single Node in Queue 
+                printf("I made it here6\n");
+                if (pq->size == 1)
+                {
+                    pq->head->next = temp;
+                    pq->tail = pq->head->next;
+                    pq->size++;
+                } else {  // Multiple Pages in Queue
+                    printf("I made it here7\n");
+                    // The Traversal
+                    while (curr->next != NULL)
+                    {
+                        curr = curr->next;
+                    }
+                    pq->tail = curr->next;
+                    curr->next = temp; // tail 
+                    curr->prev = curr;
+                    pq->size++;  // Add size
+                }
+            }
+            // END OF INSERT AT END --------
+            
+            // DELETE AT DEPTH depth (No longer helper function) -------
+                // Edge Case #1 - Empty Queue (this wont happen) 
+                // Edge Case #2 - Single Node in Queue 
+            if (pq->size == 1)
+            {
+                pq->head = NULL;
+                pq->tail = NULL;
+                pq->size--;
+            }
+                // Edge Case #3 - Hit @ head of queue 
+            else if (pq->head == temp)  // USE TEMP FROM EARLIER SINCE IT IS ALREADY IN THE DEPTH SPOT
+            {
+                pq->head = temp->next;
+                temp = NULL;
+                pq->size--;
+            }
+                // Edge Case #4 - Hit @ tail of queue
+            else if (pq->tail == temp)  // since it got added to the tail there are two in a row
+                // This temp is where we left off in the depth, not where we inserted (! +1)
+            {
+                pq->tail = temp->prev;
+                // im just going to delete the last one that was the prev tail even though 
+                // they are both the same this way is just easier
+                temp = NULL;
+                pq->size--;
+            }
+            else {
+            // ELSE 
+                temp->prev->next = temp->next;
+                temp->next->prev = temp->prev;
+                temp = NULL;
+                pq->size--;
+            }
+            // END OF DELETE AT DEPTH depth -------
+            return depth;
 
-        insertEnd(pq,current);  
-        delAt(pq,depth);  // includes a free   
-
-        return depth;
-        } else {  // Miss, same code as below 
-            printf("Miss\n");
+        } else {  // MISS PAGE NEVER FOUND
             PqNode *newNodePNum = (PqNode*)malloc(sizeof(PqNode));  // Allocate new node
             newNodePNum->pageNum = pageNum;
-            insertEnd(pq,newNodePNum);  // Give us head of queue as a result
-            return -1;
+
+            // INSERT AT END (No longer helper function) --------
+            struct PqNode *curr = pq->head;
+            
+                // Edge Case #1 - Empty Queue 
+            if (curr == NULL)
+            {
+                pq->head = newNodePNum;
+                pq->tail = newNodePNum;
+                pq->size++;
+                return -1;
+            }
+            else {   
+                // Edge Case #2 - Single Node in Queue 
+                if (pq->size == 1)
+                {
+                    pq->head->next = newNodePNum;
+                    pq->tail = pq->head->next;
+                    pq->size++;
+                    return -1;
+                } else {  // Multiple Pages in Queue
+                    // The Traversal
+                    while (curr->next != NULL)
+                    {
+                        curr = curr->next;
+                    }
+                    pq->tail = curr->next;
+                    curr->next = newNodePNum;
+                    curr->prev = curr;
+                    pq->size++;  // Add size
+                    return -1;
+                }
+            }
+            // END OF INSERT AT END --------
+            return -1;  // Fault 
         }
     }  
+
     printf("nothing in the queue\n");
     // there is nothing in the queue... auto miss
         // MISS path (page not found):
@@ -77,7 +172,38 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {  // this is the LRU here
         //   - Return -1.
     PqNode *newNodePNum = (PqNode*)malloc(sizeof(PqNode));  // Allocate new node
     newNodePNum->pageNum = pageNum;
-    insertEnd(pq, newNodePNum);
+    // INSERT AT END (No longer helper function) --------
+            struct PqNode *curr = pq->head;
+                // Edge Case #1 - Empty Queue (it is already empty or should be)
+            if (pq->size == 0)
+            {
+                pq->head = newNodePNum;
+                pq->tail = newNodePNum;
+                pq->size++;
+                return -1;
+            }
+            else {   
+                // Edge Case #2 - Single Node in Queue 
+                if (pq->size == 1)
+                {
+                    pq->head->next = newNodePNum;
+                    pq->tail = newNodePNum;
+                    pq->size++;
+                    return -1;
+                } else {  // Multiple Pages in Queue
+                    // The Traversal
+                    while (curr->next != NULL)
+                    {
+                        curr = curr->next;
+                    }
+                    curr->next = newNodePNum;
+                    pq->tail = newNodePNum;
+                    curr->prev = curr;
+                    pq->size++;  // Add size
+                    return -1;
+                }
+            }
+            // END OF INSERT AT END --------
     return -1;
 }
 
@@ -138,31 +264,7 @@ struct PageQueue *delHead(struct PageQueue *queue) {
     return queue;
 }
 
-struct PageQueue *insertEnd(struct PageQueue *queue, PqNode *new_node)
-{   struct PqNode *curr = queue->head;
-    
-    if (curr == NULL)
-    {
-        //printf("yo theres nothing in the queue");
-        queue->head = new_node;
-        queue->tail = new_node;
-    }
-    else 
-    {   
-        while (curr->next != NULL)
-        {
-            curr = curr->next;
-        }
-        
-        queue->tail = curr->next;
-        curr->next = new_node;
-        curr->prev = curr;
-        //printf("increasing size of q\n");
-        queue->size++;  // Add size
-    }
 
-    return queue;
-}
 
 struct PageQueue *delAt(struct PageQueue *queue, int position) {
   
