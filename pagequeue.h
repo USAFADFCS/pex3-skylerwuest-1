@@ -60,4 +60,17 @@ void pqFree(PageQueue *pq);
  */
 void pqPrint(PageQueue *pq);
 
+/** findElementLinkedList()
+ * @brief  - finds the postion of a given element, if it exists
+ * @param  list - a ptr to the linked list structure
+ * @param  element - value to find
+ * @pre    - unmodified linked list
+ * @post   - unmodified linked list; position returned if found
+ */
+int findElementDLinkedList(PageQueue* list, int element);
+
+
+struct PageQueue *delHead(struct PageQueue *head); 
+struct PageQueue *insertEnd(struct PageQueue *head, PqNode *new_node);
+
 #endif  // PAGEQUEUE_H

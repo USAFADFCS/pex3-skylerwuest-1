@@ -10,13 +10,15 @@
 #ifndef BYUTR_H
 #define BYUTR_H
 
+#include <stdint.h>
+
 typedef struct BYUADDRESSTRACE {
-    unsigned long addr;
-    unsigned char reqtype;
-    unsigned char size;
-    unsigned char attr;
-    unsigned char proc;
-    unsigned long time;
+    uint32_t addr;
+    uint8_t reqtype;
+    uint8_t size;
+    uint8_t attr;
+    uint8_t proc;
+    uint32_t time;
 } p2AddrTr;
 
 /* reqtype values */
@@ -41,13 +43,5 @@ typedef struct BYUADDRESSTRACE {
 #define STOPCLKACK 0x36 // acknowledge stop clock
 #define SMIACK 0x37     // acknowledge SMI mode
 
-/* NOTE: You do NOT need this code. All platforms used in this course
-   (Intel/AMD Ubuntu, Apple Silicon Mac) are little-endian and match
-   the trace file format. This block is a legacy utility from the
-   original BYU distribution for rare big-endian workstations
-   (e.g. Sun SPARC, circa 2000) that no longer exist in our labs. */
-#ifdef BIG_ENDIAN
-
-#endif
 
 #endif  // BYUTR_H
