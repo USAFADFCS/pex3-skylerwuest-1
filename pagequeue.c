@@ -18,12 +18,12 @@
 PageQueue *pqInit(unsigned int maxSize) {
     // TODO: malloc a PageQueue, set head and tail to NULL,
     //       size to 0, maxSize to maxSize, and return the pointer
-    struct PageQueue *new_node = (struct PageQueue *)malloc(sizeof(struct PageQueue));
-    new_node->head = NULL;
-    new_node->tail = NULL;
-    new_node->size = 0;
-    new_node->maxSize = maxSize;
-    return new_node;
+    struct PageQueue *new_q = (struct PageQueue *)malloc(sizeof(struct PageQueue));
+    new_q->head = NULL; 
+    new_q->tail = NULL;
+    new_q->size = 0;
+    new_q->maxSize = maxSize;
+    return new_q;
 }
 
 /**
@@ -36,40 +36,49 @@ long pqAccess(PageQueue *pq, unsigned long pageNum) {  // this is the LRU here
     //   - Return d.
 
     int depth = 0;
-    PqNode *temp = pq->tail;
+    
+    if (pq->head != NULL && pq->tail != NULL) // There is something in the queue
+    {   
+        PqNode *temp = pq->tail;
+        while (pq->tail != NULL)
+        {   
+            if (temp->pageNum == pageNum)
+            {
+                continue;
+            } else{
+                temp = temp->prev;
+                printf("depth, %d", depth);
+                depth++;
+            }
+        }
 
-    while (temp != NULL && temp->pageNum != pageNum){
-        temp = temp->prev;
-        depth++;
-    }
-
-    if (temp != NULL)  // Page Found
-    {
+        if (temp->pageNum == pageNum)  // Page Found
+        {
         // Remove the node from its current position and re-insert it at the tail (most recently used)
-        //PqNode *current = temp;
-        pq = delHead(pq);  // includes a free      
-        pq = insertEnd(pq,temp);        
-        // Return d.
+        PqNode *current = temp;
+
+        insertEnd(pq,current);  
+        delAt(pq,depth);  // includes a free   
+
         return depth;
-    }
-    
-    
-    // MISS path (page not found):
-    //   - Allocate a new node for pageNum and insert it at the tail.
-    //   - If size now exceeds maxSize, evict the head node (free it).
-    //   - Return -1.
+        } else {  // Miss, same code as below 
+            printf("Miss\n");
+            PqNode *newNodePNum = (PqNode*)malloc(sizeof(PqNode));  // Allocate new node
+            newNodePNum->pageNum = pageNum;
+            insertEnd(pq,newNodePNum);  // Give us head of queue as a result
+            return -1;
+        }
+    }  
+    printf("nothing in the queue\n");
+    // there is nothing in the queue... auto miss
+        // MISS path (page not found):
+        //   - Allocate a new node for pageNum and insert it at the tail.
+        //   - If size now exceeds maxSize, evict the head node (free it).
+        //   - Return -1.
     PqNode *newNodePNum = (PqNode*)malloc(sizeof(PqNode));  // Allocate new node
     newNodePNum->pageNum = pageNum;
-    pq = insertEnd(pq,newNodePNum);  // Give us head of queue as a result
-    
-    // Check size (make a new variable)
-    if (pq->size > pq->maxSize)  // Larger, evict head node
-    {   
-        delHead(pq); 
-        return -1;  // something went wrong
-    }
-    free(newNodePNum);
-    return depth;
+    insertEnd(pq, newNodePNum);
+    return -1;
 }
 
 /**
@@ -113,24 +122,6 @@ struct PageQueue *delHead(struct PageQueue *queue) {
         return NULL;
     }
 
-    // if (queue->head->next == NULL)
-    // {
-    //     free(queue->head);
-    //     return queue;
-    // }
-    
-    // // Go to last node 
-    // struct PqNode *curr = queue->head;
-    // while (curr->next != NULL)
-    // {
-    //     curr = curr->next;
-    // }
-
-    // // update previous 
-    
-
-    // Store in temp for deletion later
-    //PqNode *curr = malloc(sizeof(PqNode));
     struct PqNode *temp = queue->head;
 
     // Move head to the next node
@@ -142,15 +133,19 @@ struct PageQueue *delHead(struct PageQueue *queue) {
 
     // Free memory and return new head
     free(temp);
+    printf("decreasing size of q\n");
     queue->size--;  // make it smaller
     return queue;
 }
 
 struct PageQueue *insertEnd(struct PageQueue *queue, PqNode *new_node)
 {   struct PqNode *curr = queue->head;
+    
     if (curr == NULL)
     {
-        curr = new_node;
+        //printf("yo theres nothing in the queue");
+        queue->head = new_node;
+        queue->tail = new_node;
     }
     else 
     {   
@@ -158,12 +153,52 @@ struct PageQueue *insertEnd(struct PageQueue *queue, PqNode *new_node)
         {
             curr = curr->next;
         }
-
+        
+        queue->tail = curr->next;
         curr->next = new_node;
-        new_node->prev = curr;
+        curr->prev = curr;
+        //printf("increasing size of q\n");
         queue->size++;  // Add size
     }
 
     return queue;
 }
 
+struct PageQueue *delAt(struct PageQueue *queue, int position) {
+  
+    // If empty, return NULL
+    if (queue == NULL){
+        return NULL;
+    }
+    
+    struct PqNode *temp = queue->head;
+
+    // traverse to position
+    for (int i = 0; temp != NULL && i < position; ++i)
+    {
+        temp = temp->next;
+    }
+    
+    if (temp == NULL)
+    {
+        return queue;
+    }
+
+    if (temp->prev != NULL){
+        temp->prev->next = temp->next;
+    }
+
+    if (temp->next != NULL)
+    {
+        temp->next->prev = temp->prev;
+    }
+
+    if (queue->head == temp)
+    {
+        temp = temp->next;
+    }
+    
+    free(temp);
+    queue->size--;  // make it smaller
+    return queue;
+}
